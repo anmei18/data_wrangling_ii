@@ -73,10 +73,10 @@ str_replace(string_vec, "jeff","Jeff")
 
 ``` r
 # to remove a word from the string
-str_replace(string_vec, "is", " ")
+str_replace(string_vec, "is", "")
 ```
 
-    ## [1] "my"   "name" " "    "jeff"
+    ## [1] "my"   "name" ""     "jeff"
 
 ``` r
 string_vec = c(
@@ -181,3 +181,78 @@ str_detect(string_vec, "\\[")
 ```
 
     ## [1]  TRUE FALSE  TRUE  TRUE
+
+## why factors are weird
+
+``` r
+factor_vec = factor(c("male","male","female","female"))
+
+as.numeric(factor_vec)
+```
+
+    ## [1] 2 2 1 1
+
+``` r
+# if you only speficified one factore, it will automatically move it to the front
+factor_vec = fct_relevel(factor_vec, "male")
+as.numeric(factor_vec)
+```
+
+    ## [1] 1 1 2 2
+
+## NSDUH
+
+``` r
+nsduh_url = "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+
+table_marj = 
+  read_html(nsduh_url) %>%
+  html_table() %>% 
+  first() %>% 
+  slice(-1)
+```
+
+Lets clean this up! 1. select out everything that contains “P Value” 2.
+change the table to a longer format 3. separate the age\_year column
+into 2 columns : age and year 4. use mutate to get rid of the “)” of the
+values 5. remove the “a”,“b”, and “c” at the end of the values of the
+percent column 6. filter OUT (get rid of) all rows that has “Total
+U.S.”, “Northeast”,“Midwest”,“South”, “West” in the State column
+
+``` r
+marj_df =
+  table_marj %>% 
+  select(-contains("P Value")) %>% 
+  pivot_longer(
+    -State,
+    names_to = "age_year",
+    values_to = "percent"
+  ) %>% 
+  separate(age_year, into = c("age","year"), "\\(") %>% 
+  mutate(
+    year = str_replace(year , "\\)", ""),
+    percent = str_replace(percent, "[a-c]$",""),
+    percent = as.numeric(percent)
+  ) %>% 
+  filter(!(State %in% c("Total U.S.", "Northeast","Midwest","South", "West")))
+
+# we can also do this:
+# separate(age_year, into = c("age","year"), -11) %>% 
+
+#The %in% operator is used for matching values. “returns a vector of the positions of (first) matches of its first argument in its second”.
+```
+
+Do dataframe staff
+
+``` r
+marj_df %>% 
+  filter(age == "12-17") %>% 
+  mutate(
+    State = fct_reorder(State, percent)
+  ) %>% 
+  ggplot(aes(x = State , y = percent, color = year)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+<img src="strings_and_factors_files/figure-gfm/unnamed-chunk-11-1.png" width="90%" />
