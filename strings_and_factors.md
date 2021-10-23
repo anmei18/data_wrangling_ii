@@ -30,6 +30,8 @@ library(rvest)
     ##     guess_encoding
 
 ``` r
+library(p8105.datasets)
+
 knitr::opts_chunk$set(
   fig.width = 6,
   fig.asp = .6,
@@ -256,3 +258,72 @@ marj_df %>%
 ```
 
 <img src="strings_and_factors_files/figure-gfm/unnamed-chunk-11-1.png" width="90%" />
+
+## Restaurant Inspection
+
+``` r
+data("rest_inspec")
+```
+
+``` r
+rest_inspec %>% 
+  janitor::tabyl(boro, grade) 
+```
+
+    ##           boro     A     B    C Not Yet Graded   P    Z   NA_
+    ##          BRONX 13688  2801  701            200 163  351 16833
+    ##       BROOKLYN 37449  6651 1684            702 416  977 51930
+    ##      MANHATTAN 61608 10532 2689            765 508 1237 80615
+    ##        Missing     4     0    0              0   0    0    13
+    ##         QUEENS 35952  6492 1593            604 331  913 45816
+    ##  STATEN ISLAND  5215   933  207             85  47  149  6730
+
+``` r
+rest_inspec = 
+  rest_inspec %>% 
+  filter(
+    str_detect(grade, "[ABC]"),
+    !(boro == "Missing")
+  ) %>% 
+  mutate(boro = str_to_title(boro))
+```
+
+``` r
+#since str_detect is case sensitive ,we need to use [] to get all the pizza place.
+
+rest_inspec %>% 
+  filter(str_detect(dba, "[Pp][Ii][Zz][Zz][Aa]")) %>%
+  janitor::tabyl(boro, grade) 
+```
+
+    ##           boro    A   B  C
+    ##          Bronx 1170 305 56
+    ##       Brooklyn 1948 296 61
+    ##      Manhattan 1983 420 76
+    ##         Queens 1647 259 48
+    ##  Staten Island  323 127 21
+
+``` r
+rest_inspec %>% 
+  filter(str_detect(dba, "[Pp][Ii][Zz][Zz][Aa]")) %>%
+  mutate(
+    boro = fct_infreq(boro)
+  ) %>% 
+  ggplot(aes(x = boro, fill = grade)) +
+  geom_bar()
+```
+
+<img src="strings_and_factors_files/figure-gfm/unnamed-chunk-16-1.png" width="90%" />
+
+``` r
+rest_inspec %>% 
+  filter(str_detect(dba, "[Pp][Ii][Zz][Zz][Aa]")) %>%
+  mutate(
+    boro = fct_infreq(boro),
+    boro = fct_recode( boro, "The City" = "Manhattan")
+  ) %>% 
+  ggplot(aes(x = boro, fill = grade)) +
+  geom_bar()
+```
+
+<img src="strings_and_factors_files/figure-gfm/unnamed-chunk-17-1.png" width="90%" />
