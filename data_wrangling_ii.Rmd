@@ -182,3 +182,4 @@ poke_data$abilities
 
 ```
 
+If you need to access the data multiple times, it is better for you to have a rmd file to access and process the data from the internet and then use another rmd file to access your processed data from the other rmd file.
